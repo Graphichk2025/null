@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Farewell Poster Generator</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #000;
+            color: #fff;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .splash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            animation: fadeOut 1s ease-out 3s forwards;
+        }
+
+        .splash-content {
+            text-align: center;
+            animation: fadeIn 1s ease-out;
+        }
+
+        .logo {
+            width: 128px;
+            height: 128px;
+            margin: 0 auto 20px;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+
+        .logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .splash-title {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .splash-subtitle {
+            color: #9ca3af;
+            font-size: 1.125rem;
+            margin-bottom: 30px;
+        }
+
+        .loading-bar {
+            width: 64px;
+            height: 4px;
+            background: linear-gradient(to right, #3b82f6, #8b5cf6);
+            border-radius: 2px;
+            margin: 0 auto;
+            animation: pulse 2s infinite;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            font-weight: bold;
+        }
+
+        .refresh-btn {
+            background: #374151;
+            border: none;
+            color: white;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .refresh-btn:hover {
+            background: #4b5563;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .card {
+            background: #111827;
+            border-radius: 8px;
+            padding: 24px;
+        }
+
+        .card h2 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        .photo-indicator {
+            background: #1f2937;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+        }
+
+        .photo-indicator p {
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        .photo-slots {
+            display: flex;
+            gap: 8px;
+        }
+
+        .photo-slot {
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .photo-slot.active {
+            background: #2563eb;
+            color: white;
+        }
+
+        .photo-slot.completed {
+            background: #059669;
+            color: white;
+        }
+
+        .photo-slot.inactive {
+            background: #4b5563;
+            color: #d1d5db;
+        }
+
+        .success-message {
+            background: #059669;
+            padding: 12px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 16px;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .camera-container {
+            position: relative;
+        }
+
+        .camera-video {
+            width: 100%;
+            border-radius: 8px;
+        }
+
+        .camera-overlay {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.875rem;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn {
+            padding: 12px 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: #2563eb;
+            color: white;
+            flex: 1;
+        }
+
+        .btn-primary:hover {
+            background: #1d4ed8;
+        }
+
+        .btn-success {
+            background: #059669;
+            color: white;
+            flex: 1;
+        }
+
+        .btn-success:hover {
+            background: #047857;
+        }
+
+        .btn-danger {
+            background: #dc2626;
+            color: white;
+            flex: 1;
+        }
+
+        .btn-danger:hover {
+            background: #b91c1c;
+        }
+
+        .btn-secondary {
+            background: #4b5563;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #374151;
+        }
+
+        .poster-container {
+            display: flex;
+            justify-content: center;
+        }
+
+        .poster {
+            width: 450px;
+            height: 650px;
+            background-image: url('https://images.pexels.com/photos/207692/pexels-photo-207692.jpeg?auto=compress&cs=tinysrgb&w=800');
+            background-size: cover;
+            background-position: center;
+            position: relative;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+
+        .poster-quote {
+            position: absolute;
+            top: 32px;
+            left: 0;
+            right: 0;
+            padding: 0 32px;
+            text-align: center;
+            color: white;
+            font-size: 18px;
+            font-style: italic;
+            font-family: serif;
+            line-height: 1.6;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .photo-frames {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .photo-frame {
+            background: white;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            transition: transform 0.3s ease;
+        }
+
+        .photo-frame.left {
+            width: 140px;
+            height: 160px;
+            padding: 12px 12px 24px 12px;
+            transform: rotate(-12deg);
+        }
+
+        .photo-frame.left:hover {
+            transform: rotate(-6deg);
+        }
+
+        .photo-frame.center {
+            width: 180px;
+            height: 200px;
+            padding: 16px 16px 32px 16px;
+            transform: rotate(3deg);
+            z-index: 10;
+        }
+
+        .photo-frame.center:hover {
+            transform: rotate(0deg);
+        }
+
+        .photo-frame.right {
+            width: 140px;
+            height: 160px;
+            padding: 12px 12px 24px 12px;
+            transform: rotate(12deg);
+        }
+
+        .photo-frame.right:hover {
+            transform: rotate(6deg);
+        }
+
+        .photo-placeholder {
+            width: 100%;
+            height: 112px;
+            background: #e5e7eb;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6b7280;
+            font-size: 0.75rem;
+            overflow: hidden;
+        }
+
+        .photo-frame.center .photo-placeholder {
+            height: 144px;
+        }
+
+        .photo-placeholder img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .memories-section {
+            position: absolute;
+            bottom: 32px;
+            left: 0;
+            right: 0;
+            padding: 0 32px;
+        }
+
+        .memories-card {
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 8px;
+            padding: 16px;
+            backdrop-filter: blur(4px);
+        }
+
+        .memories-title {
+            color: white;
+            text-align: center;
+            font-family: serif;
+            font-size: 18px;
+            margin-bottom: 8px;
+        }
+
+        .memories-text {
+            color: white;
+            text-align: center;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .qr-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .qr-canvas {
+            border: 1px solid #4b5563;
+            border-radius: 8px;
+        }
+
+        .qr-text {
+            color: #9ca3af;
+            font-size: 0.875rem;
+            text-align: center;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeOut {
+            to {
+                opacity: 0;
+                visibility: hidden;
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+                gap: 24px;
+            }
+            
+            .poster {
+                transform: scale(0.8);
+            }
+            
+            .header h1 {
+                font-size: 1.5rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .poster {
+                transform: scale(0.65);
+            }
+            
+            .photo-frames {
+                flex-direction: column;
+                gap: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // Lucide Icons
+        const Camera = () => React.createElement('svg', {
+            width: 20, height: 20, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2
+        }, React.createElement('path', { d: 'M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z' }), React.createElement('circle', { cx: 12, cy: 13, r: 3 }));
+
+        const Upload = () => React.createElement('svg', {
+            width: 20, height: 20, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2
+        }, React.createElement('path', { d: 'M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4' }), React.createElement('polyline', { points: '7,10 12,15 17,10' }), React.createElement('line', { x1: 12, y1: 15, x2: 12, y2: 3 }));
+
+        const RotateCcw = () => React.createElement('svg', {
+            width: 20, height: 20, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2
+        }, React.createElement('polyline', { points: '1,4 1,10 7,10' }), React.createElement('path', { d: 'M3.51 15a9 9 0 1 0 2.13-9.36L1 10' }));
+
+        const CheckCircle = () => React.createElement('svg', {
+            width: 16, height: 16, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2
+        }, React.createElement('path', { d: 'M22 11.08V12a10 10 0 1 1-5.93-9.14' }), React.createElement('polyline', { points: '22,4 12,14.01 9,11.01' }));
+
+        const RefreshCw = () => React.createElement('svg', {
+            width: 20, height: 20, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2
+        }, React.createElement('polyline', { points: '23,4 23,10 17,10' }), React.createElement('path', { d: 'M20.49 15a9 9 0 1 1-2.13-9.36L23 10' }));
+
+        const Download = () => React.createElement('svg', {
+            width: 16, height: 16, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2
+        }, React.createElement('path', { d: 'M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4' }), React.createElement('polyline', { points: '7,10 12,15 17,10' }), React.createElement('line', { x1: 12, y1: 15, x2: 12, y2: 3 }));
+
+        const Share2 = () => React.createElement('svg', {
+            width: 16, height: 16, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2
+        }, React.createElement('circle', { cx: 18, cy: 5, r: 3 }), React.createElement('circle', { cx: 6, cy: 12, r: 3 }), React.createElement('circle', { cx: 18, cy: 19, r: 3 }), React.createElement('line', { x1: 8.59, y1: 13.51, x2: 15.42, y2: 17.49 }), React.createElement('line', { x1: 15.41, y1: 6.51, x2: 8.59, y2: 10.49 }));
+
+        // Splash Screen Component
+        const SplashScreen = () => {
+            return React.createElement('div', { className: 'splash-screen' },
+                React.createElement('div', { className: 'splash-content' },
+                    React.createElement('div', { className: 'logo' },
+                        React.createElement('img', {
+                            src: 'https://images.pexels.com/photos/267885/pexels-photo-267885.jpeg?auto=compress&cs=tinysrgb&w=400',
+                            alt: 'Logo'
+                        })
+                    ),
+                    React.createElement('h1', { className: 'splash-title' }, 'Farewell Poster Generator'),
+                    React.createElement('p', { className: 'splash-subtitle' }, 'Create beautiful farewell memories'),
+                    React.createElement('div', { className: 'loading-bar' })
+                )
+            );
+        };
+
+        // Photo Upload Component
+        const PhotoUpload = ({ onPhotoUpload }) => {
+            const fileInputRef = useRef(null);
+            const videoRef = useRef(null);
+            const canvasRef = useRef(null);
+            const [isCameraActive, setIsCameraActive] = useState(false);
+            const [facingMode, setFacingMode] = useState('user');
+            const [stream, setStream] = useState(null);
+            const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
+            const [uploadedCount, setUploadedCount] = useState(0);
+            const [showSuccess, setShowSuccess] = useState(false);
+
+            const startCamera = async () => {
+                try {
+                    const mediaStream = await navigator.mediaDevices.getUserMedia({
+                        video: { facingMode }
+                    });
+                    
+                    if (videoRef.current) {
+                        videoRef.current.srcObject = mediaStream;
+                        setStream(mediaStream);
+                        setIsCameraActive(true);
+                    }
+                } catch (error) {
+                    console.error('Error accessing camera:', error);
+                    alert('Unable to access camera. Please check permissions.');
+                }
+            };
+
+            const stopCamera = () => {
+                if (stream) {
+                    stream.getTracks().forEach(track => track.stop());
+                    setStream(null);
+                }
+                setIsCameraActive(false);
+            };
+
+            const switchCamera = () => {
+                stopCamera();
+                setFacingMode(facingMode === 'user' ? 'environment' : 'user');
+                setTimeout(() => {
+                    startCamera();
+                }, 100);
+            };
+
+            const capturePhoto = () => {
+                if (!videoRef.current || !canvasRef.current) return;
+
+                const video = videoRef.current;
+                const canvas = canvasRef.current;
+                const context = canvas.getContext('2d');
+
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+
+                if (context) {
+                    context.drawImage(video, 0, 0);
+                    const dataUrl = canvas.toDataURL('image/png');
+                    onPhotoUpload(dataUrl, currentPhotoIndex);
+                    
+                    setShowSuccess(true);
+                    setUploadedCount(prev => prev + 1);
+                    
+                    setTimeout(() => {
+                        setShowSuccess(false);
+                        if (currentPhotoIndex < 2) {
+                            setCurrentPhotoIndex(prev => prev + 1);
+                        }
+                    }, 1500);
+                    
+                    stopCamera();
+                }
+            };
+
+            const handleFileUpload = (event) => {
+                const file = event.target.files?.[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        if (e.target?.result) {
+                            onPhotoUpload(e.target.result, currentPhotoIndex);
+                            
+                            setShowSuccess(true);
+                            setUploadedCount(prev => prev + 1);
+                            
+                            setTimeout(() => {
+                                setShowSuccess(false);
+                                if (currentPhotoIndex < 2) {
+                                    setCurrentPhotoIndex(prev => prev + 1);
+                                }
+                            }, 1500);
+                        }
+                    };
+                    reader.readAsDataURL(file);
+                }
+            };
+
+            const getPhotoSlotName = (index) => {
+                switch (index) {
+                    case 0: return 'Left Photo';
+                    case 1: return 'Main Photo';
+                    case 2: return 'Right Photo';
+                    default: return 'Photo';
+                }
+            };
+
+            return React.createElement('div', { className: 'card' },
+                React.createElement('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' } },
+                    React.createElement('h2', null, 'Add Your Photos'),
+                    React.createElement('div', { style: { fontSize: '0.875rem', color: '#9ca3af' } },
+                        `${uploadedCount}/3 photos added`
+                    )
+                ),
+                
+                React.createElement('div', { className: 'photo-indicator' },
+                    React.createElement('p', null, `Currently adding: ${getPhotoSlotName(currentPhotoIndex)}`),
+                    React.createElement('div', { className: 'photo-slots' },
+                        [0, 1, 2].map(index =>
+                            React.createElement('button', {
+                                key: index,
+                                onClick: () => setCurrentPhotoIndex(index),
+                                className: `photo-slot ${
+                                    index === currentPhotoIndex ? 'active' :
+                                    index < uploadedCount ? 'completed' : 'inactive'
+                                }`
+                            },
+                                getPhotoSlotName(index),
+                                index < uploadedCount && React.createElement(CheckCircle, { style: { marginLeft: '4px' } })
+                            )
+                        )
+                    )
+                ),
+
+                showSuccess && React.createElement('div', { className: 'success-message' },
+                    React.createElement(CheckCircle),
+                    React.createElement('span', { style: { fontWeight: '500' } },
+                        `${getPhotoSlotName(currentPhotoIndex - 1)} added successfully!`
+                    )
+                ),
+                
+                !isCameraActive ? React.createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: '16px' } },
+                    React.createElement('button', {
+                        onClick: startCamera,
+                        className: 'btn btn-primary'
+                    },
+                        React.createElement(Camera),
+                        React.createElement('span', null, `Take Photo (${getPhotoSlotName(currentPhotoIndex)})`)
+                    ),
+                    
+                    React.createElement('button', {
+                        onClick: () => fileInputRef.current?.click(),
+                        className: 'btn btn-success'
+                    },
+                        React.createElement(Upload),
+                        React.createElement('span', null, `Upload Photo (${getPhotoSlotName(currentPhotoIndex)})`)
+                    ),
+                    
+                    React.createElement('input', {
+                        ref: fileInputRef,
+                        type: 'file',
+                        accept: 'image/*',
+                        onChange: handleFileUpload,
+                        className: 'hidden'
+                    })
+                ) : React.createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: '16px' } },
+                    React.createElement('div', { className: 'camera-container' },
+                        React.createElement('video', {
+                            ref: videoRef,
+                            autoPlay: true,
+                            playsInline: true,
+                            className: 'camera-video'
+                        }),
+                        React.createElement('div', { className: 'camera-overlay' },
+                            getPhotoSlotName(currentPhotoIndex)
+                        )
+                    ),
+                    
+                    React.createElement('div', { className: 'button-group' },
+                        React.createElement('button', {
+                            onClick: capturePhoto,
+                            className: 'btn btn-danger'
+                        }, 'Capture Photo'),
+                        
+                        React.createElement('button', {
+                            onClick: switchCamera,
+                            className: 'btn btn-secondary'
+                        }, React.createElement(RotateCcw)),
+                        
+                        React.createElement('button', {
+                            onClick: stopCamera,
+                            className: 'btn btn-secondary'
+                        }, 'Cancel')
+                    )
+                ),
+                
+                React.createElement('canvas', { ref: canvasRef, className: 'hidden' })
+            );
+        };
+
+        // QR Code Generator Component
+        const QRCodeGenerator = ({ posterUrl }) => {
+            const canvasRef = useRef(null);
+
+            useEffect(() => {
+                if (canvasRef.current && posterUrl && window.QRious) {
+                    try {
+                        new QRious({
+                            element: canvasRef.current,
+                            value: posterUrl,
+                            size: 200,
+                            backgroundAlpha: 1,
+                            foreground: 'white',
+                            background: '#1f2937'
+                        });
+                    } catch (error) {
+                        console.error('Error generating QR code:', error);
+                    }
+                }
+            }, [posterUrl]);
+
+            const handleDirectDownload = () => {
+                if (posterUrl) {
+                    const link = document.createElement('a');
+                    link.download = `farewell-poster-${Date.now()}.png`;
+                    link.href = posterUrl;
+                    link.click();
+                }
+            };
+
+            const handleShare = async () => {
+                if (navigator.share && posterUrl) {
+                    try {
+                        const response = await fetch(posterUrl);
+                        const blob = await response.blob();
+                        const file = new File([blob], 'farewell-poster.png', { type: 'image/png' });
+                        
+                        await navigator.share({
+                            files: [file],
+                            title: 'Farewell Poster',
+                            text: 'Check out this farewell poster!'
+                        });
+                    } catch (error) {
+                        console.error('Error sharing:', error);
+                        navigator.clipboard.writeText(posterUrl);
+                        alert('Poster URL copied to clipboard!');
+                    }
+                } else {
+                    navigator.clipboard.writeText(posterUrl);
+                    alert('Poster URL copied to clipboard!');
+                }
+            };
+
+            return React.createElement('div', { className: 'card' },
+                React.createElement('h2', null, 'Download & Share'),
+                
+                React.createElement('div', { className: 'qr-section' },
+                    React.createElement('canvas', { ref: canvasRef, className: 'qr-canvas' }),
+                    
+                    React.createElement('p', { className: 'qr-text' },
+                        'Scan QR code to download the poster'
+                    ),
+                    
+                    React.createElement('div', { className: 'button-group' },
+                        React.createElement('button', {
+                            onClick: handleDirectDownload,
+                            className: 'btn btn-primary'
+                        },
+                            React.createElement(Download),
+                            React.createElement('span', null, 'Download')
+                        ),
+                        
+                        React.createElement('button', {
+                            onClick: handleShare,
+                            className: 'btn btn-primary'
+                        },
+                            React.createElement(Share2),
+                            React.createElement('span', null, 'Share')
+                        )
+                    )
+                )
+            );
+        };
+
+        // Poster Canvas Component
+        const PosterCanvas = React.forwardRef(({ uploadedPhotos, onPosterGenerated }, ref) => {
+            useEffect(() => {
+                if (uploadedPhotos.some(photo => photo !== null)) {
+                    const timer = setTimeout(() => {
+                        generatePoster();
+                    }, 1000);
+                    return () => clearTimeout(timer);
+                }
+            }, [uploadedPhotos]);
+
+            const generatePoster = async () => {
+                if (!ref?.current || !window.html2canvas) return;
+
+                try {
+                    const canvas = await html2canvas(ref.current, {
+                        width: 450,
+                        height: 650,
+                        scale: 2,
+                        backgroundColor: null,
+                        useCORS: true,
+                        allowTaint: true
+                    });
+
+                    const dataUrl = canvas.toDataURL('image/png');
+                    onPosterGenerated(dataUrl);
+
+                    // Auto-download
+                    const link = document.createElement('a');
+                    link.download = `farewell-poster-${Date.now()}.png`;
+                    link.href = dataUrl;
+                    link.click();
+                } catch (error) {
+                    console.error('Error generating poster:', error);
+                }
+            };
+
+            return React.createElement('div', { className: 'poster-container' },
+                React.createElement('div', { ref: ref, className: 'poster' },
+                    React.createElement('div', { className: 'poster-quote' },
+                        '"Every ending is a new beginning in disguise."'
+                    ),
+
+                    React.createElement('div', { className: 'photo-frames' },
+                        React.createElement('div', { className: 'photo-frame left' },
+                            React.createElement('div', { className: 'photo-placeholder' },
+                                uploadedPhotos[0] ? React.createElement('img', {
+                                    src: uploadedPhotos[0],
+                                    alt: 'Uploaded'
+                                }) : React.createElement('div', null, 'Photo 1')
+                            )
+                        ),
+
+                        React.createElement('div', { className: 'photo-frame center' },
+                            React.createElement('div', { className: 'photo-placeholder' },
+                                uploadedPhotos[1] ? React.createElement('img', {
+                                    src: uploadedPhotos[1],
+                                    alt: 'Uploaded'
+                                }) : React.createElement('div', null, 'Main Photo')
+                            )
+                        ),
+
+                        React.createElement('div', { className: 'photo-frame right' },
+                            React.createElement('div', { className: 'photo-placeholder' },
+                                uploadedPhotos[2] ? React.createElement('img', {
+                                    src: uploadedPhotos[2],
+                                    alt: 'Uploaded'
+                                }) : React.createElement('div', null, 'Photo 3')
+                            )
+                        )
+                    ),
+
+                    React.createElement('div', { className: 'memories-section' },
+                        React.createElement('div', { className: 'memories-card' },
+                            React.createElement('h3', { className: 'memories-title' }, 'Memories'),
+                            React.createElement('p', { className: 'memories-text' },
+                                'The best memories are made with the people who matter most. Thank you for being part of this incredible journey.'
+                            )
+                        )
+                    )
+                ),
+
+                !uploadedPhotos.some(photo => photo !== null) && React.createElement('p', {
+                    style: { color: '#9ca3af', textAlign: 'center', marginTop: '16px', fontSize: '0.875rem' }
+                }, 'Upload photos to generate your farewell poster')
+            );
+        });
+
+        // Main App Component
+        const App = () => {
+            const [showSplash, setShowSplash] = useState(true);
+            const [uploadedPhotos, setUploadedPhotos] = useState([null, null, null]);
+            const [generatedPoster, setGeneratedPoster] = useState(null);
+            const canvasRef = useRef(null);
+
+            useEffect(() => {
+                const timer = setTimeout(() => {
+                    setShowSplash(false);
+                }, 4000);
+
+                return () => clearTimeout(timer);
+            }, []);
+
+            const handlePhotoUpload = (photoDataUrl, index) => {
+                setUploadedPhotos(prev => {
+                    const newPhotos = [...prev];
+                    newPhotos[index] = photoDataUrl;
+                    return newPhotos;
+                });
+            };
+
+            const handleRefresh = () => {
+                setUploadedPhotos([null, null, null]);
+                setGeneratedPoster(null);
+            };
+
+            if (showSplash) {
+                return React.createElement(SplashScreen);
+            }
+
+            return React.createElement('div', { style: { minHeight: '100vh', background: '#000', padding: '16px' } },
+                React.createElement('div', { className: 'container' },
+                    React.createElement('div', { className: 'header' },
+                        React.createElement('h1', null, 'Farewell Poster Generator'),
+                        React.createElement('button', {
+                            onClick: handleRefresh,
+                            className: 'refresh-btn',
+                            title: 'Refresh'
+                        }, React.createElement(RefreshCw))
+                    ),
+
+                    React.createElement('div', { className: 'main-grid' },
+                        React.createElement('div', { className: 'controls' },
+                            React.createElement(PhotoUpload, { onPhotoUpload: handlePhotoUpload }),
+                            generatedPoster && React.createElement(QRCodeGenerator, { posterUrl: generatedPoster })
+                        ),
+
+                        React.createElement('div', null,
+                            React.createElement(PosterCanvas, {
+                                ref: canvasRef,
+                                uploadedPhotos: uploadedPhotos,
+                                onPosterGenerated: setGeneratedPoster
+                            })
+                        )
+                    )
+                )
+            );
+        };
+
+        // Render the app
+        ReactDOM.render(React.createElement(App), document.getElementById('root'));
+    </script>
+</body>
+</html>
