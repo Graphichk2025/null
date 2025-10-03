@@ -1,964 +1,1011 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Farewell Poster Generator</title>
-    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
-    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #000;
-            color: #fff;
-            overflow-x: hidden;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-
-        .splash-screen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: #000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            animation: fadeOut 1s ease-out 3s forwards;
-        }
-
-        .splash-content {
-            text-align: center;
-            animation: fadeIn 1s ease-out;
-        }
-
-        .logo {
-            width: 128px;
-            height: 128px;
-            margin: 0 auto 20px;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-        }
-
-        .logo img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .splash-title {
-            font-size: 2.5rem;
-            font-weight: bold;
-            margin-bottom: 10px;
-        }
-
-        .splash-subtitle {
-            color: #9ca3af;
-            font-size: 1.125rem;
-            margin-bottom: 30px;
-        }
-
-        .loading-bar {
-            width: 64px;
-            height: 4px;
-            background: linear-gradient(to right, #3b82f6, #8b5cf6);
-            border-radius: 2px;
-            margin: 0 auto;
-            animation: pulse 2s infinite;
-        }
-
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 40px;
-        }
-
-        .header h1 {
-            font-size: 2rem;
-            font-weight: bold;
-        }
-
-        .refresh-btn {
-            background: #374151;
-            border: none;
-            color: white;
-            padding: 12px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-
-        .refresh-btn:hover {
-            background: #4b5563;
-        }
-
-        .main-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 40px;
-        }
-
-        .controls {
-            display: flex;
-            flex-direction: column;
-            gap: 24px;
-        }
-
-        .card {
-            background: #111827;
-            border-radius: 8px;
-            padding: 24px;
-        }
-
-        .card h2 {
-            font-size: 1.25rem;
-            font-weight: 600;
-            margin-bottom: 16px;
-        }
-
-        .photo-indicator {
-            background: #1f2937;
-            padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 16px;
-        }
-
-        .photo-indicator p {
-            font-size: 0.875rem;
-            font-weight: 500;
-            margin-bottom: 8px;
-        }
-
-        .photo-slots {
-            display: flex;
-            gap: 8px;
-        }
-
-        .photo-slot {
-            padding: 4px 12px;
-            border-radius: 4px;
-            font-size: 0.75rem;
-            border: none;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .photo-slot.active {
-            background: #2563eb;
-            color: white;
-        }
-
-        .photo-slot.completed {
-            background: #059669;
-            color: white;
-        }
-
-        .photo-slot.inactive {
-            background: #4b5563;
-            color: #d1d5db;
-        }
-
-        .success-message {
-            background: #059669;
-            padding: 12px;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 16px;
-            animation: fadeIn 0.5s ease-out;
-        }
-
-        .camera-container {
-            position: relative;
-        }
-
-        .camera-video {
-            width: 100%;
-            border-radius: 8px;
-        }
-
-        .camera-overlay {
-            position: absolute;
-            top: 8px;
-            left: 8px;
-            background: rgba(0, 0, 0, 0.5);
-            color: white;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 0.875rem;
-        }
-
-        .button-group {
-            display: flex;
-            gap: 8px;
-        }
-
-        .btn {
-            padding: 12px 16px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 500;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-
-        .btn-primary {
-            background: #2563eb;
-            color: white;
-            flex: 1;
-        }
-
-        .btn-primary:hover {
-            background: #1d4ed8;
-        }
-
-        .btn-success {
-            background: #059669;
-            color: white;
-            flex: 1;
-        }
-
-        .btn-success:hover {
-            background: #047857;
-        }
-
-        .btn-danger {
-            background: #dc2626;
-            color: white;
-            flex: 1;
-        }
-
-        .btn-danger:hover {
-            background: #b91c1c;
-        }
-
-        .btn-secondary {
-            background: #4b5563;
-            color: white;
-        }
-
-        .btn-secondary:hover {
-            background: #374151;
-        }
-
-        .poster-container {
-            display: flex;
-            justify-content: center;
-        }
-
-        .poster {
-            width: 450px;
-            height: 650px;
-            background-image: url('https://images.pexels.com/photos/207692/pexels-photo-207692.jpeg?auto=compress&cs=tinysrgb&w=800');
-            background-size: cover;
-            background-position: center;
-            position: relative;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-        }
-
-        .poster-quote {
-            position: absolute;
-            top: 32px;
-            left: 0;
-            right: 0;
-            padding: 0 32px;
-            text-align: center;
-            color: white;
-            font-size: 18px;
-            font-style: italic;
-            font-family: serif;
-            line-height: 1.6;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-        }
-
-        .photo-frames {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
-
-        .photo-frame {
-            background: white;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-            transition: transform 0.3s ease;
-        }
-
-        .photo-frame.left {
-            width: 140px;
-            height: 160px;
-            padding: 12px 12px 24px 12px;
-            transform: rotate(-12deg);
-        }
-
-        .photo-frame.left:hover {
-            transform: rotate(-6deg);
-        }
-
-        .photo-frame.center {
-            width: 180px;
-            height: 200px;
-            padding: 16px 16px 32px 16px;
-            transform: rotate(3deg);
-            z-index: 10;
-        }
-
-        .photo-frame.center:hover {
-            transform: rotate(0deg);
-        }
-
-        .photo-frame.right {
-            width: 140px;
-            height: 160px;
-            padding: 12px 12px 24px 12px;
-            transform: rotate(12deg);
-        }
-
-        .photo-frame.right:hover {
-            transform: rotate(6deg);
-        }
-
-        .photo-placeholder {
-            width: 100%;
-            height: 112px;
-            background: #e5e7eb;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #6b7280;
-            font-size: 0.75rem;
-            overflow: hidden;
-        }
-
-        .photo-frame.center .photo-placeholder {
-            height: 144px;
-        }
-
-        .photo-placeholder img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .memories-section {
-            position: absolute;
-            bottom: 32px;
-            left: 0;
-            right: 0;
-            padding: 0 32px;
-        }
-
-        .memories-card {
-            background: rgba(0, 0, 0, 0.5);
-            border-radius: 8px;
-            padding: 16px;
-            backdrop-filter: blur(4px);
-        }
-
-        .memories-title {
-            color: white;
-            text-align: center;
-            font-family: serif;
-            font-size: 18px;
-            margin-bottom: 8px;
-        }
-
-        .memories-text {
-            color: white;
-            text-align: center;
-            font-size: 14px;
-            line-height: 1.5;
-        }
-
-        .qr-section {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 16px;
-        }
-
-        .qr-canvas {
-            border: 1px solid #4b5563;
-            border-radius: 8px;
-        }
-
-        .qr-text {
-            color: #9ca3af;
-            font-size: 0.875rem;
-            text-align: center;
-        }
-
-        .hidden {
-            display: none;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes fadeOut {
-            to {
-                opacity: 0;
-                visibility: hidden;
-            }
-        }
-
-        @keyframes pulse {
-            0%, 100% {
-                opacity: 1;
-            }
-            50% {
-                opacity: 0.5;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .main-grid {
-                grid-template-columns: 1fr;
-                gap: 24px;
-            }
-            
-            .poster {
-                transform: scale(0.8);
-            }
-            
-            .header h1 {
-                font-size: 1.5rem;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .poster {
-                transform: scale(0.65);
-            }
-            
-            .photo-frames {
-                flex-direction: column;
-                gap: 8px;
-            }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>secret25</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: #000;
+      color: #fff;
+      overflow-x: hidden;
+    }
+
+    .login-screen {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .login-screen h1 {
+      font-size: 48px;
+      font-weight: 300;
+      letter-spacing: 2px;
+    }
+
+    .login-form {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      width: 320px;
+      max-width: 90%;
+    }
+
+    .login-form input {
+      padding: 16px;
+      background: #1a1a1a;
+      border: 1px solid #333;
+      color: #fff;
+      font-size: 16px;
+      border-radius: 4px;
+    }
+
+    .login-form input:focus {
+      outline: none;
+      border-color: #666;
+    }
+
+    .login-form button {
+      padding: 16px;
+      background: #fff;
+      color: #000;
+      border: none;
+      font-size: 16px;
+      font-weight: 500;
+      cursor: pointer;
+      border-radius: 4px;
+      transition: background 0.2s;
+    }
+
+    .login-form button:hover {
+      background: #e0e0e0;
+    }
+
+    .error-msg {
+      color: #ff4444;
+      font-size: 14px;
+      text-align: center;
+    }
+
+    .app-container {
+      display: none;
+      min-height: 100vh;
+    }
+
+    .app-container.active {
+      display: flex;
+    }
+
+    .sidebar {
+      width: 240px;
+      background: #0a0a0a;
+      border-right: 1px solid #222;
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.3s;
+    }
+
+    .sidebar.collapsed {
+      transform: translateX(-240px);
+    }
+
+    .sidebar-header {
+      padding: 24px;
+      border-bottom: 1px solid #222;
+    }
+
+    .sidebar-header h2 {
+      font-size: 24px;
+      font-weight: 300;
+      letter-spacing: 1px;
+    }
+
+    .sidebar-menu {
+      flex: 1;
+      padding: 16px 0;
+    }
+
+    .menu-item {
+      padding: 16px 24px;
+      cursor: pointer;
+      transition: background 0.2s;
+      border-left: 3px solid transparent;
+    }
+
+    .menu-item:hover {
+      background: #1a1a1a;
+    }
+
+    .menu-item.active {
+      background: #1a1a1a;
+      border-left-color: #fff;
+    }
+
+    .sidebar-footer {
+      padding: 16px 24px;
+      border-top: 1px solid #222;
+    }
+
+    .logout-btn {
+      width: 100%;
+      padding: 12px;
+      background: transparent;
+      color: #fff;
+      border: 1px solid #333;
+      cursor: pointer;
+      border-radius: 4px;
+      transition: all 0.2s;
+    }
+
+    .logout-btn:hover {
+      background: #1a1a1a;
+      border-color: #666;
+    }
+
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+
+    .header {
+      padding: 24px;
+      border-bottom: 1px solid #222;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .menu-toggle {
+      display: none;
+      background: transparent;
+      border: 1px solid #333;
+      color: #fff;
+      padding: 8px 16px;
+      cursor: pointer;
+      border-radius: 4px;
+      margin-right: 16px;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .header-info {
+      display: flex;
+      gap: 24px;
+      font-size: 14px;
+    }
+
+    .fullscreen-clock-btn {
+      padding: 8px 16px;
+      background: #fff;
+      color: #000;
+      border: none;
+      cursor: pointer;
+      border-radius: 4px;
+      font-size: 14px;
+      transition: background 0.2s;
+    }
+
+    .fullscreen-clock-btn:hover {
+      background: #e0e0e0;
+    }
+
+    .content-area {
+      padding: 32px;
+      flex: 1;
+    }
+
+    .content-section {
+      display: none;
+    }
+
+    .content-section.active {
+      display: block;
+    }
+
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 8px;
+      max-width: 800px;
+    }
+
+    .calendar-header {
+      text-align: center;
+      padding: 12px;
+      font-weight: 500;
+      font-size: 14px;
+    }
+
+    .calendar-day {
+      aspect-ratio: 1;
+      background: #1a1a1a;
+      border: 1px solid #333;
+      padding: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    .calendar-day:hover:not(.locked) {
+      border-color: #666;
+      background: #222;
+    }
+
+    .calendar-day.today {
+      border-color: #fff;
+    }
+
+    .calendar-day.completed {
+      background: #0d4d0d;
+    }
+
+    .calendar-day.locked {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .calendar-day-number {
+      font-size: 12px;
+      margin-bottom: 4px;
+    }
+
+    .calendar-day-task {
+      font-size: 10px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      flex: 1;
+    }
+
+    .calendar-locked-msg {
+      text-align: center;
+      padding: 32px;
+      font-size: 18px;
+      color: #666;
+    }
+
+    .download-btn {
+      margin-top: 24px;
+      padding: 12px 24px;
+      background: #fff;
+      color: #000;
+      border: none;
+      cursor: pointer;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.9);
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .modal.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: #0a0a0a;
+      border: 1px solid #333;
+      padding: 32px;
+      max-width: 500px;
+      width: 90%;
+      border-radius: 8px;
+    }
+
+    .modal-content h3 {
+      margin-bottom: 16px;
+      font-weight: 400;
+    }
+
+    .modal-content input,
+    .modal-content textarea {
+      width: 100%;
+      padding: 12px;
+      background: #1a1a1a;
+      border: 1px solid #333;
+      color: #fff;
+      font-size: 14px;
+      border-radius: 4px;
+      margin-bottom: 16px;
+      font-family: inherit;
+    }
+
+    .modal-content textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+    }
+
+    .modal-actions button {
+      padding: 10px 20px;
+      border: none;
+      cursor: pointer;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+
+    .btn-primary {
+      background: #fff;
+      color: #000;
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: #fff;
+      border: 1px solid #333;
+    }
+
+    .checkbox-container {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .checkbox-container input[type="checkbox"] {
+      width: auto;
+      margin: 0;
+    }
+
+    .timers-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .timer-card {
+      background: #1a1a1a;
+      border: 1px solid #333;
+      padding: 24px;
+      border-radius: 8px;
+    }
+
+    .timer-card h3 {
+      margin-bottom: 8px;
+      font-weight: 400;
+    }
+
+    .timer-quote {
+      font-size: 12px;
+      color: #999;
+      margin-bottom: 16px;
+      font-style: italic;
+    }
+
+    .timer-display {
+      font-size: 32px;
+      font-weight: 300;
+      margin-bottom: 16px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .timer-card.finished {
+      border-color: #fff;
+      background: #1a1a1a;
+    }
+
+    .timer-card.finished .timer-display {
+      color: #4d4;
+    }
+
+    .timer-controls {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .timer-controls button {
+      padding: 8px 16px;
+      background: transparent;
+      color: #fff;
+      border: 1px solid #333;
+      cursor: pointer;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+
+    .timer-controls button:hover {
+      background: #222;
+    }
+
+    .add-timer-btn {
+      padding: 12px 24px;
+      background: #fff;
+      color: #000;
+      border: none;
+      cursor: pointer;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+
+    .secret-section textarea {
+      width: 100%;
+      min-height: 200px;
+      padding: 16px;
+      background: #1a1a1a;
+      border: 1px solid #333;
+      color: #fff;
+      font-size: 14px;
+      border-radius: 4px;
+      font-family: inherit;
+      resize: vertical;
+    }
+
+    .secret-section button {
+      margin-top: 16px;
+      padding: 12px 24px;
+      background: #fff;
+      color: #000;
+      border: none;
+      cursor: pointer;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+
+    .fullscreen-clock-view {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: #000;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      z-index: 2000;
+    }
+
+    .fullscreen-clock-view.active {
+      display: flex;
+    }
+
+    .fullscreen-time {
+      font-size: 120px;
+      font-weight: 200;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 4px;
+    }
+
+    .fullscreen-date {
+      font-size: 24px;
+      font-weight: 300;
+      margin-top: 16px;
+      color: #999;
+    }
+
+    .close-fullscreen {
+      position: absolute;
+      top: 32px;
+      right: 32px;
+      padding: 12px 24px;
+      background: transparent;
+      color: #fff;
+      border: 1px solid #333;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+
+    @media (max-width: 768px) {
+      .menu-toggle {
+        display: block;
+      }
+
+      .sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        z-index: 100;
+      }
+
+      .header-info {
+        flex-direction: column;
+        gap: 8px;
+        font-size: 12px;
+      }
+
+      .content-area {
+        padding: 16px;
+      }
+
+      .calendar-grid {
+        gap: 4px;
+      }
+
+      .calendar-day {
+        padding: 4px;
+      }
+
+      .fullscreen-time {
+        font-size: 64px;
+      }
+
+      .fullscreen-date {
+        font-size: 18px;
+      }
+
+      .timers-container {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
 </head>
 <body>
-    <div id="root"></div>
+  <div class="login-screen" id="loginScreen">
+    <h1>secret25</h1>
+    <div class="login-form">
+      <input type="password" id="passwordInput" placeholder="Enter password" />
+      <button onclick="login()">Enter</button>
+      <div class="error-msg" id="errorMsg"></div>
+    </div>
+  </div>
 
-    <script type="text/babel">
-        const { useState, useEffect, useRef } = React;
+  <div class="app-container" id="appContainer">
+    <div class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <h2>secret25</h2>
+      </div>
+      <div class="sidebar-menu">
+        <div class="menu-item active" onclick="switchSection('calendar')">Calendar</div>
+        <div class="menu-item" onclick="switchSection('timers')">Timers</div>
+        <div class="menu-item" onclick="switchSection('secret')">Secret</div>
+        <div class="menu-item" onclick="openFullscreenClock()">Fullscreen Clock</div>
+      </div>
+      <div class="sidebar-footer">
+        <button class="logout-btn" onclick="logout()">Logout</button>
+      </div>
+    </div>
 
-        // Lucide Icons
-        const Camera = () => React.createElement('svg', {
-            width: 20, height: 20, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2
-        }, React.createElement('path', { d: 'M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z' }), React.createElement('circle', { cx: 12, cy: 13, r: 3 }));
+    <div class="main-content">
+      <div class="header">
+        <div class="header-left">
+          <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+          <div class="header-info">
+            <span id="currentDate"></span>
+            <span id="currentTime"></span>
+          </div>
+        </div>
+        <button class="fullscreen-clock-btn" onclick="openFullscreenClock()">Fullscreen Clock</button>
+      </div>
 
-        const Upload = () => React.createElement('svg', {
-            width: 20, height: 20, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2
-        }, React.createElement('path', { d: 'M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4' }), React.createElement('polyline', { points: '7,10 12,15 17,10' }), React.createElement('line', { x1: 12, y1: 15, x2: 12, y2: 3 }));
+      <div class="content-area">
+        <div class="content-section active" id="calendarSection">
+          <div id="calendarContainer"></div>
+        </div>
 
-        const RotateCcw = () => React.createElement('svg', {
-            width: 20, height: 20, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2
-        }, React.createElement('polyline', { points: '1,4 1,10 7,10' }), React.createElement('path', { d: 'M3.51 15a9 9 0 1 0 2.13-9.36L1 10' }));
+        <div class="content-section" id="timersSection">
+          <div class="timers-container" id="timersContainer"></div>
+          <button class="add-timer-btn" onclick="openAddTimerModal()">Add Timer</button>
+        </div>
 
-        const CheckCircle = () => React.createElement('svg', {
-            width: 16, height: 16, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2
-        }, React.createElement('path', { d: 'M22 11.08V12a10 10 0 1 1-5.93-9.14' }), React.createElement('polyline', { points: '22,4 12,14.01 9,11.01' }));
+        <div class="content-section secret-section" id="secretSection">
+          <h2 style="margin-bottom: 16px; font-weight: 400;">Secret Notes & Links</h2>
+          <textarea id="secretNotes" placeholder="Paste your study links and notes here..."></textarea>
+          <button onclick="saveSecretNotes()">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
-        const RefreshCw = () => React.createElement('svg', {
-            width: 20, height: 20, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2
-        }, React.createElement('polyline', { points: '23,4 23,10 17,10' }), React.createElement('path', { d: 'M20.49 15a9 9 0 1 1-2.13-9.36L23 10' }));
+  <div class="modal" id="dayModal">
+    <div class="modal-content">
+      <h3 id="modalTitle"></h3>
+      <input type="text" id="taskInput" placeholder="Enter task for this day" />
+      <div class="checkbox-container">
+        <input type="checkbox" id="completedCheckbox" />
+        <label for="completedCheckbox">Mark as completed</label>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-secondary" onclick="closeDayModal()">Cancel</button>
+        <button class="btn-primary" onclick="saveDayTask()">Save</button>
+      </div>
+    </div>
+  </div>
 
-        const Download = () => React.createElement('svg', {
-            width: 16, height: 16, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2
-        }, React.createElement('path', { d: 'M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4' }), React.createElement('polyline', { points: '7,10 12,15 17,10' }), React.createElement('line', { x1: 12, y1: 15, x2: 12, y2: 3 }));
+  <div class="modal" id="timerModal">
+    <div class="modal-content">
+      <h3>Create Timer</h3>
+      <input type="text" id="timerTitle" placeholder="Timer title" />
+      <textarea id="timerQuote" placeholder="Optional quote (shown when timer finishes)"></textarea>
+      <input type="number" id="timerHours" placeholder="Hours" min="0" value="0" />
+      <input type="number" id="timerMinutes" placeholder="Minutes" min="0" value="0" />
+      <input type="number" id="timerSeconds" placeholder="Seconds" min="0" value="0" />
+      <div class="modal-actions">
+        <button class="btn-secondary" onclick="closeTimerModal()">Cancel</button>
+        <button class="btn-primary" onclick="createTimer()">Create</button>
+      </div>
+    </div>
+  </div>
 
-        const Share2 = () => React.createElement('svg', {
-            width: 16, height: 16, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2
-        }, React.createElement('circle', { cx: 18, cy: 5, r: 3 }), React.createElement('circle', { cx: 6, cy: 12, r: 3 }), React.createElement('circle', { cx: 18, cy: 19, r: 3 }), React.createElement('line', { x1: 8.59, y1: 13.51, x2: 15.42, y2: 17.49 }), React.createElement('line', { x1: 15.41, y1: 6.51, x2: 8.59, y2: 10.49 }));
+  <div class="fullscreen-clock-view" id="fullscreenClock">
+    <button class="close-fullscreen" onclick="closeFullscreenClock()">Close</button>
+    <div class="fullscreen-time" id="fullscreenTime"></div>
+    <div class="fullscreen-date" id="fullscreenDate"></div>
+  </div>
 
-        // Splash Screen Component
-        const SplashScreen = () => {
-            return React.createElement('div', { className: 'splash-screen' },
-                React.createElement('div', { className: 'splash-content' },
-                    React.createElement('div', { className: 'logo' },
-                        React.createElement('img', {
-                            src: 'https://images.pexels.com/photos/267885/pexels-photo-267885.jpeg?auto=compress&cs=tinysrgb&w=400',
-                            alt: 'Logo'
-                        })
-                    ),
-                    React.createElement('h1', { className: 'splash-title' }, 'Farewell Poster Generator'),
-                    React.createElement('p', { className: 'splash-subtitle' }, 'Create beautiful farewell memories'),
-                    React.createElement('div', { className: 'loading-bar' })
-                )
-            );
-        };
+  <script>
+    const PASSWORD = 'secret2025';
+    let currentSection = 'calendar';
+    let selectedDay = null;
+    let timers = [];
 
-        // Photo Upload Component
-        const PhotoUpload = ({ onPhotoUpload }) => {
-            const fileInputRef = useRef(null);
-            const videoRef = useRef(null);
-            const canvasRef = useRef(null);
-            const [isCameraActive, setIsCameraActive] = useState(false);
-            const [facingMode, setFacingMode] = useState('user');
-            const [stream, setStream] = useState(null);
-            const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
-            const [uploadedCount, setUploadedCount] = useState(0);
-            const [showSuccess, setShowSuccess] = useState(false);
+    function login() {
+      const input = document.getElementById('passwordInput');
+      const errorMsg = document.getElementById('errorMsg');
+      
+      if (input.value === PASSWORD) {
+        sessionStorage.setItem('authenticated', 'true');
+        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('appContainer').classList.add('active');
+        errorMsg.textContent = '';
+        input.value = '';
+        init();
+      } else {
+        errorMsg.textContent = 'Incorrect password';
+      }
+    }
 
-            const startCamera = async () => {
-                try {
-                    const mediaStream = await navigator.mediaDevices.getUserMedia({
-                        video: { facingMode }
-                    });
-                    
-                    if (videoRef.current) {
-                        videoRef.current.srcObject = mediaStream;
-                        setStream(mediaStream);
-                        setIsCameraActive(true);
-                    }
-                } catch (error) {
-                    console.error('Error accessing camera:', error);
-                    alert('Unable to access camera. Please check permissions.');
-                }
-            };
+    function logout() {
+      sessionStorage.removeItem('authenticated');
+      document.getElementById('loginScreen').style.display = 'flex';
+      document.getElementById('appContainer').classList.remove('active');
+      document.getElementById('passwordInput').value = '';
+    }
 
-            const stopCamera = () => {
-                if (stream) {
-                    stream.getTracks().forEach(track => track.stop());
-                    setStream(null);
-                }
-                setIsCameraActive(false);
-            };
+    function toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('collapsed');
+    }
 
-            const switchCamera = () => {
-                stopCamera();
-                setFacingMode(facingMode === 'user' ? 'environment' : 'user');
-                setTimeout(() => {
-                    startCamera();
-                }, 100);
-            };
+    function switchSection(section) {
+      currentSection = section;
+      document.querySelectorAll('.menu-item').forEach(item => item.classList.remove('active'));
+      document.querySelectorAll('.content-section').forEach(sec => sec.classList.remove('active'));
+      
+      event.target.classList.add('active');
+      document.getElementById(section + 'Section').classList.add('active');
+      
+      if (window.innerWidth <= 768) {
+        document.getElementById('sidebar').classList.add('collapsed');
+      }
+    }
 
-            const capturePhoto = () => {
-                if (!videoRef.current || !canvasRef.current) return;
+    function updateDateTime() {
+      const now = new Date();
+      const dateStr = now.toLocaleDateString('en-US', { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      });
+      const timeStr = now.toLocaleTimeString('en-US', { 
+        hour: '2-digit', 
+        minute: '2-digit',
+        second: '2-digit'
+      });
+      
+      document.getElementById('currentDate').textContent = dateStr;
+      document.getElementById('currentTime').textContent = timeStr;
+      document.getElementById('fullscreenTime').textContent = timeStr;
+      document.getElementById('fullscreenDate').textContent = dateStr;
+    }
 
-                const video = videoRef.current;
-                const canvas = canvasRef.current;
-                const context = canvas.getContext('2d');
+    function renderCalendar() {
+      const container = document.getElementById('calendarContainer');
+      const now = new Date();
+      const currentYear = now.getFullYear();
+      const currentMonth = now.getMonth();
+      const currentDay = now.getDate();
+      const isAfter2025 = currentYear > 2025 || (currentYear === 2025 && currentMonth === 11 && currentDay > 31);
+      
+      if (isAfter2025) {
+        const calendarData = JSON.parse(localStorage.getItem('calendar2025') || '{}');
+        container.innerHTML = `
+          <div class="calendar-locked-msg">
+            <p>Calendar 2025 is now complete and locked.</p>
+            <button class="download-btn" onclick="downloadCalendar()">Download Calendar Snapshot</button>
+          </div>
+          <div class="calendar-grid" style="margin-top: 24px; opacity: 0.5; pointer-events: none;">
+            ${renderCalendarGrid(calendarData, true)}
+          </div>
+        `;
+        return;
+      }
+      
+      const calendarData = JSON.parse(localStorage.getItem('calendar2025') || '{}');
+      container.innerHTML = `
+        <h2 style="margin-bottom: 24px; font-weight: 400;">December 2025</h2>
+        <div class="calendar-grid">
+          ${['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => 
+            `<div class="calendar-header">${day}</div>`
+          ).join('')}
+          ${renderCalendarGrid(calendarData, false)}
+        </div>
+      `;
+    }
 
-                canvas.width = video.videoWidth;
-                canvas.height = video.videoHeight;
+    function renderCalendarGrid(calendarData, isLocked) {
+      const now = new Date();
+      const currentYear = now.getFullYear();
+      const currentMonth = now.getMonth();
+      const currentDay = now.getDate();
+      const firstDay = new Date(2025, 11, 1).getDay();
+      const daysInMonth = 31;
+      
+      let html = '';
+      
+      for (let i = 0; i < firstDay; i++) {
+        html += '<div></div>';
+      }
+      
+      for (let day = 1; day <= daysInMonth; day++) {
+        const dayKey = `2025-12-${String(day).padStart(2, '0')}`;
+        const dayData = calendarData[dayKey] || { task: '', completed: false };
+        const isToday = currentYear === 2025 && currentMonth === 11 && currentDay === day;
+        const isPast = currentYear > 2025 || (currentYear === 2025 && currentMonth === 11 && currentDay > day);
+        const isLockedDay = isLocked || (dayData.completed && isPast);
+        
+        const classes = [
+          'calendar-day',
+          isToday ? 'today' : '',
+          dayData.completed ? 'completed' : '',
+          isLockedDay ? 'locked' : ''
+        ].filter(Boolean).join(' ');
+        
+        html += `
+          <div class="${classes}" onclick="openDayModal('${dayKey}', ${isLockedDay})">
+            <div class="calendar-day-number">${day}</div>
+            <div class="calendar-day-task">${dayData.task || ''}</div>
+          </div>
+        `;
+      }
+      
+      return html;
+    }
 
-                if (context) {
-                    context.drawImage(video, 0, 0);
-                    const dataUrl = canvas.toDataURL('image/png');
-                    onPhotoUpload(dataUrl, currentPhotoIndex);
-                    
-                    setShowSuccess(true);
-                    setUploadedCount(prev => prev + 1);
-                    
-                    setTimeout(() => {
-                        setShowSuccess(false);
-                        if (currentPhotoIndex < 2) {
-                            setCurrentPhotoIndex(prev => prev + 1);
-                        }
-                    }, 1500);
-                    
-                    stopCamera();
-                }
-            };
+    function openDayModal(dayKey, isLocked) {
+      if (isLocked) return;
+      
+      selectedDay = dayKey;
+      const calendarData = JSON.parse(localStorage.getItem('calendar2025') || '{}');
+      const dayData = calendarData[dayKey] || { task: '', completed: false };
+      
+      document.getElementById('modalTitle').textContent = `Day ${dayKey.split('-')[2]}`;
+      document.getElementById('taskInput').value = dayData.task || '';
+      document.getElementById('completedCheckbox').checked = dayData.completed || false;
+      document.getElementById('dayModal').classList.add('active');
+    }
 
-            const handleFileUpload = (event) => {
-                const file = event.target.files?.[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        if (e.target?.result) {
-                            onPhotoUpload(e.target.result, currentPhotoIndex);
-                            
-                            setShowSuccess(true);
-                            setUploadedCount(prev => prev + 1);
-                            
-                            setTimeout(() => {
-                                setShowSuccess(false);
-                                if (currentPhotoIndex < 2) {
-                                    setCurrentPhotoIndex(prev => prev + 1);
-                                }
-                            }, 1500);
-                        }
-                    };
-                    reader.readAsDataURL(file);
-                }
-            };
+    function closeDayModal() {
+      document.getElementById('dayModal').classList.remove('active');
+      selectedDay = null;
+    }
 
-            const getPhotoSlotName = (index) => {
-                switch (index) {
-                    case 0: return 'Left Photo';
-                    case 1: return 'Main Photo';
-                    case 2: return 'Right Photo';
-                    default: return 'Photo';
-                }
-            };
+    function saveDayTask() {
+      if (!selectedDay) return;
+      
+      const calendarData = JSON.parse(localStorage.getItem('calendar2025') || '{}');
+      calendarData[selectedDay] = {
+        task: document.getElementById('taskInput').value,
+        completed: document.getElementById('completedCheckbox').checked
+      };
+      
+      localStorage.setItem('calendar2025', JSON.stringify(calendarData));
+      closeDayModal();
+      renderCalendar();
+    }
 
-            return React.createElement('div', { className: 'card' },
-                React.createElement('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' } },
-                    React.createElement('h2', null, 'Add Your Photos'),
-                    React.createElement('div', { style: { fontSize: '0.875rem', color: '#9ca3af' } },
-                        `${uploadedCount}/3 photos added`
-                    )
-                ),
-                
-                React.createElement('div', { className: 'photo-indicator' },
-                    React.createElement('p', null, `Currently adding: ${getPhotoSlotName(currentPhotoIndex)}`),
-                    React.createElement('div', { className: 'photo-slots' },
-                        [0, 1, 2].map(index =>
-                            React.createElement('button', {
-                                key: index,
-                                onClick: () => setCurrentPhotoIndex(index),
-                                className: `photo-slot ${
-                                    index === currentPhotoIndex ? 'active' :
-                                    index < uploadedCount ? 'completed' : 'inactive'
-                                }`
-                            },
-                                getPhotoSlotName(index),
-                                index < uploadedCount && React.createElement(CheckCircle, { style: { marginLeft: '4px' } })
-                            )
-                        )
-                    )
-                ),
+    function downloadCalendar() {
+      const calendarData = JSON.parse(localStorage.getItem('calendar2025') || '{}');
+      let text = 'CALENDAR 2025 - DECEMBER\n\n';
+      
+      for (let day = 1; day <= 31; day++) {
+        const dayKey = `2025-12-${String(day).padStart(2, '0')}`;
+        const dayData = calendarData[dayKey] || { task: '', completed: false };
+        const status = dayData.completed ? '[COMPLETED]' : '[INCOMPLETE]';
+        text += `Day ${day} ${status}\n`;
+        if (dayData.task) {
+          text += `  Task: ${dayData.task}\n`;
+        }
+        text += '\n';
+      }
+      
+      const blob = new Blob([text], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'calendar-2025-snapshot.txt';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
 
-                showSuccess && React.createElement('div', { className: 'success-message' },
-                    React.createElement(CheckCircle),
-                    React.createElement('span', { style: { fontWeight: '500' } },
-                        `${getPhotoSlotName(currentPhotoIndex - 1)} added successfully!`
-                    )
-                ),
-                
-                !isCameraActive ? React.createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: '16px' } },
-                    React.createElement('button', {
-                        onClick: startCamera,
-                        className: 'btn btn-primary'
-                    },
-                        React.createElement(Camera),
-                        React.createElement('span', null, `Take Photo (${getPhotoSlotName(currentPhotoIndex)})`)
-                    ),
-                    
-                    React.createElement('button', {
-                        onClick: () => fileInputRef.current?.click(),
-                        className: 'btn btn-success'
-                    },
-                        React.createElement(Upload),
-                        React.createElement('span', null, `Upload Photo (${getPhotoSlotName(currentPhotoIndex)})`)
-                    ),
-                    
-                    React.createElement('input', {
-                        ref: fileInputRef,
-                        type: 'file',
-                        accept: 'image/*',
-                        onChange: handleFileUpload,
-                        className: 'hidden'
-                    })
-                ) : React.createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: '16px' } },
-                    React.createElement('div', { className: 'camera-container' },
-                        React.createElement('video', {
-                            ref: videoRef,
-                            autoPlay: true,
-                            playsInline: true,
-                            className: 'camera-video'
-                        }),
-                        React.createElement('div', { className: 'camera-overlay' },
-                            getPhotoSlotName(currentPhotoIndex)
-                        )
-                    ),
-                    
-                    React.createElement('div', { className: 'button-group' },
-                        React.createElement('button', {
-                            onClick: capturePhoto,
-                            className: 'btn btn-danger'
-                        }, 'Capture Photo'),
-                        
-                        React.createElement('button', {
-                            onClick: switchCamera,
-                            className: 'btn btn-secondary'
-                        }, React.createElement(RotateCcw)),
-                        
-                        React.createElement('button', {
-                            onClick: stopCamera,
-                            className: 'btn btn-secondary'
-                        }, 'Cancel')
-                    )
-                ),
-                
-                React.createElement('canvas', { ref: canvasRef, className: 'hidden' })
-            );
-        };
+    function loadTimers() {
+      timers = JSON.parse(localStorage.getItem('timers') || '[]');
+      renderTimers();
+    }
 
-        // QR Code Generator Component
-        const QRCodeGenerator = ({ posterUrl }) => {
-            const canvasRef = useRef(null);
+    function renderTimers() {
+      const container = document.getElementById('timersContainer');
+      if (timers.length === 0) {
+        container.innerHTML = '<p style="color: #666;">No timers yet. Create one to get started.</p>';
+        return;
+      }
+      
+      container.innerHTML = timers.map((timer, index) => {
+        const remaining = timer.endTime ? Math.max(0, timer.endTime - Date.now()) : timer.duration;
+        const hours = Math.floor(remaining / 3600000);
+        const minutes = Math.floor((remaining % 3600000) / 60000);
+        const seconds = Math.floor((remaining % 60000) / 1000);
+        const displayTime = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        const isFinished = remaining === 0 && timer.endTime;
+        
+        return `
+          <div class="timer-card ${isFinished ? 'finished' : ''}">
+            <h3>${timer.title}</h3>
+            ${timer.quote ? `<div class="timer-quote">${timer.quote}</div>` : ''}
+            <div class="timer-display">${displayTime}</div>
+            <div class="timer-controls">
+              <button onclick="startTimer(${index})">${timer.running ? 'Pause' : 'Start'}</button>
+              <button onclick="resetTimer(${index})">Reset</button>
+              <button onclick="deleteTimer(${index})">Delete</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
 
-            useEffect(() => {
-                if (canvasRef.current && posterUrl && window.QRious) {
-                    try {
-                        new QRious({
-                            element: canvasRef.current,
-                            value: posterUrl,
-                            size: 200,
-                            backgroundAlpha: 1,
-                            foreground: 'white',
-                            background: '#1f2937'
-                        });
-                    } catch (error) {
-                        console.error('Error generating QR code:', error);
-                    }
-                }
-            }, [posterUrl]);
+    function openAddTimerModal() {
+      document.getElementById('timerModal').classList.add('active');
+    }
 
-            const handleDirectDownload = () => {
-                if (posterUrl) {
-                    const link = document.createElement('a');
-                    link.download = `farewell-poster-${Date.now()}.png`;
-                    link.href = posterUrl;
-                    link.click();
-                }
-            };
+    function closeTimerModal() {
+      document.getElementById('timerModal').classList.remove('active');
+      document.getElementById('timerTitle').value = '';
+      document.getElementById('timerQuote').value = '';
+      document.getElementById('timerHours').value = '0';
+      document.getElementById('timerMinutes').value = '0';
+      document.getElementById('timerSeconds').value = '0';
+    }
 
-            const handleShare = async () => {
-                if (navigator.share && posterUrl) {
-                    try {
-                        const response = await fetch(posterUrl);
-                        const blob = await response.blob();
-                        const file = new File([blob], 'farewell-poster.png', { type: 'image/png' });
-                        
-                        await navigator.share({
-                            files: [file],
-                            title: 'Farewell Poster',
-                            text: 'Check out this farewell poster!'
-                        });
-                    } catch (error) {
-                        console.error('Error sharing:', error);
-                        navigator.clipboard.writeText(posterUrl);
-                        alert('Poster URL copied to clipboard!');
-                    }
-                } else {
-                    navigator.clipboard.writeText(posterUrl);
-                    alert('Poster URL copied to clipboard!');
-                }
-            };
+    function createTimer() {
+      const title = document.getElementById('timerTitle').value || 'Timer';
+      const quote = document.getElementById('timerQuote').value;
+      const hours = parseInt(document.getElementById('timerHours').value) || 0;
+      const minutes = parseInt(document.getElementById('timerMinutes').value) || 0;
+      const seconds = parseInt(document.getElementById('timerSeconds').value) || 0;
+      
+      const duration = (hours * 3600 + minutes * 60 + seconds) * 1000;
+      
+      if (duration === 0) {
+        alert('Please set a duration for the timer');
+        return;
+      }
+      
+      timers.push({
+        title,
+        quote,
+        duration,
+        endTime: null,
+        running: false
+      });
+      
+      localStorage.setItem('timers', JSON.stringify(timers));
+      closeTimerModal();
+      renderTimers();
+    }
 
-            return React.createElement('div', { className: 'card' },
-                React.createElement('h2', null, 'Download & Share'),
-                
-                React.createElement('div', { className: 'qr-section' },
-                    React.createElement('canvas', { ref: canvasRef, className: 'qr-canvas' }),
-                    
-                    React.createElement('p', { className: 'qr-text' },
-                        'Scan QR code to download the poster'
-                    ),
-                    
-                    React.createElement('div', { className: 'button-group' },
-                        React.createElement('button', {
-                            onClick: handleDirectDownload,
-                            className: 'btn btn-primary'
-                        },
-                            React.createElement(Download),
-                            React.createElement('span', null, 'Download')
-                        ),
-                        
-                        React.createElement('button', {
-                            onClick: handleShare,
-                            className: 'btn btn-primary'
-                        },
-                            React.createElement(Share2),
-                            React.createElement('span', null, 'Share')
-                        )
-                    )
-                )
-            );
-        };
+    function startTimer(index) {
+      const timer = timers[index];
+      
+      if (timer.running) {
+        timer.running = false;
+        const remaining = Math.max(0, timer.endTime - Date.now());
+        timer.duration = remaining;
+        timer.endTime = null;
+      } else {
+        timer.running = true;
+        timer.endTime = Date.now() + timer.duration;
+      }
+      
+      localStorage.setItem('timers', JSON.stringify(timers));
+      renderTimers();
+    }
 
-        // Poster Canvas Component
-        const PosterCanvas = React.forwardRef(({ uploadedPhotos, onPosterGenerated }, ref) => {
-            useEffect(() => {
-                if (uploadedPhotos.some(photo => photo !== null)) {
-                    const timer = setTimeout(() => {
-                        generatePoster();
-                    }, 1000);
-                    return () => clearTimeout(timer);
-                }
-            }, [uploadedPhotos]);
+    function resetTimer(index) {
+      const timer = timers[index];
+      const originalDuration = timer.endTime ? 
+        (timer.endTime - Date.now() + timer.duration) : 
+        timer.duration;
+      
+      timer.running = false;
+      timer.endTime = null;
+      timer.duration = originalDuration;
+      
+      localStorage.setItem('timers', JSON.stringify(timers));
+      renderTimers();
+    }
 
-            const generatePoster = async () => {
-                if (!ref?.current || !window.html2canvas) return;
+    function deleteTimer(index) {
+      timers.splice(index, 1);
+      localStorage.setItem('timers', JSON.stringify(timers));
+      renderTimers();
+    }
 
-                try {
-                    const canvas = await html2canvas(ref.current, {
-                        width: 450,
-                        height: 650,
-                        scale: 2,
-                        backgroundColor: null,
-                        useCORS: true,
-                        allowTaint: true
-                    });
+    function loadSecretNotes() {
+      const notes = localStorage.getItem('secretNotes') || '';
+      document.getElementById('secretNotes').value = notes;
+    }
 
-                    const dataUrl = canvas.toDataURL('image/png');
-                    onPosterGenerated(dataUrl);
+    function saveSecretNotes() {
+      const notes = document.getElementById('secretNotes').value;
+      localStorage.setItem('secretNotes', notes);
+      alert('Notes saved');
+    }
 
-                    // Auto-download
-                    const link = document.createElement('a');
-                    link.download = `farewell-poster-${Date.now()}.png`;
-                    link.href = dataUrl;
-                    link.click();
-                } catch (error) {
-                    console.error('Error generating poster:', error);
-                }
-            };
+    function openFullscreenClock() {
+      document.getElementById('fullscreenClock').classList.add('active');
+    }
 
-            return React.createElement('div', { className: 'poster-container' },
-                React.createElement('div', { ref: ref, className: 'poster' },
-                    React.createElement('div', { className: 'poster-quote' },
-                        '"Every ending is a new beginning in disguise."'
-                    ),
+    function closeFullscreenClock() {
+      document.getElementById('fullscreenClock').classList.remove('active');
+    }
 
-                    React.createElement('div', { className: 'photo-frames' },
-                        React.createElement('div', { className: 'photo-frame left' },
-                            React.createElement('div', { className: 'photo-placeholder' },
-                                uploadedPhotos[0] ? React.createElement('img', {
-                                    src: uploadedPhotos[0],
-                                    alt: 'Uploaded'
-                                }) : React.createElement('div', null, 'Photo 1')
-                            )
-                        ),
+    function init() {
+      updateDateTime();
+      setInterval(updateDateTime, 1000);
+      setInterval(() => {
+        if (timers.some(t => t.running)) {
+          renderTimers();
+        }
+      }, 100);
+      
+      renderCalendar();
+      loadTimers();
+      loadSecretNotes();
+    }
 
-                        React.createElement('div', { className: 'photo-frame center' },
-                            React.createElement('div', { className: 'photo-placeholder' },
-                                uploadedPhotos[1] ? React.createElement('img', {
-                                    src: uploadedPhotos[1],
-                                    alt: 'Uploaded'
-                                }) : React.createElement('div', null, 'Main Photo')
-                            )
-                        ),
+    document.getElementById('passwordInput').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') login();
+    });
 
-                        React.createElement('div', { className: 'photo-frame right' },
-                            React.createElement('div', { className: 'photo-placeholder' },
-                                uploadedPhotos[2] ? React.createElement('img', {
-                                    src: uploadedPhotos[2],
-                                    alt: 'Uploaded'
-                                }) : React.createElement('div', null, 'Photo 3')
-                            )
-                        )
-                    ),
-
-                    React.createElement('div', { className: 'memories-section' },
-                        React.createElement('div', { className: 'memories-card' },
-                            React.createElement('h3', { className: 'memories-title' }, 'Memories'),
-                            React.createElement('p', { className: 'memories-text' },
-                                'The best memories are made with the people who matter most. Thank you for being part of this incredible journey.'
-                            )
-                        )
-                    )
-                ),
-
-                !uploadedPhotos.some(photo => photo !== null) && React.createElement('p', {
-                    style: { color: '#9ca3af', textAlign: 'center', marginTop: '16px', fontSize: '0.875rem' }
-                }, 'Upload photos to generate your farewell poster')
-            );
-        });
-
-        // Main App Component
-        const App = () => {
-            const [showSplash, setShowSplash] = useState(true);
-            const [uploadedPhotos, setUploadedPhotos] = useState([null, null, null]);
-            const [generatedPoster, setGeneratedPoster] = useState(null);
-            const canvasRef = useRef(null);
-
-            useEffect(() => {
-                const timer = setTimeout(() => {
-                    setShowSplash(false);
-                }, 4000);
-
-                return () => clearTimeout(timer);
-            }, []);
-
-            const handlePhotoUpload = (photoDataUrl, index) => {
-                setUploadedPhotos(prev => {
-                    const newPhotos = [...prev];
-                    newPhotos[index] = photoDataUrl;
-                    return newPhotos;
-                });
-            };
-
-            const handleRefresh = () => {
-                setUploadedPhotos([null, null, null]);
-                setGeneratedPoster(null);
-            };
-
-            if (showSplash) {
-                return React.createElement(SplashScreen);
-            }
-
-            return React.createElement('div', { style: { minHeight: '100vh', background: '#000', padding: '16px' } },
-                React.createElement('div', { className: 'container' },
-                    React.createElement('div', { className: 'header' },
-                        React.createElement('h1', null, 'Farewell Poster Generator'),
-                        React.createElement('button', {
-                            onClick: handleRefresh,
-                            className: 'refresh-btn',
-                            title: 'Refresh'
-                        }, React.createElement(RefreshCw))
-                    ),
-
-                    React.createElement('div', { className: 'main-grid' },
-                        React.createElement('div', { className: 'controls' },
-                            React.createElement(PhotoUpload, { onPhotoUpload: handlePhotoUpload }),
-                            generatedPoster && React.createElement(QRCodeGenerator, { posterUrl: generatedPoster })
-                        ),
-
-                        React.createElement('div', null,
-                            React.createElement(PosterCanvas, {
-                                ref: canvasRef,
-                                uploadedPhotos: uploadedPhotos,
-                                onPosterGenerated: setGeneratedPoster
-                            })
-                        )
-                    )
-                )
-            );
-        };
-
-        // Render the app
-        ReactDOM.render(React.createElement(App), document.getElementById('root'));
-    </script>
+    if (sessionStorage.getItem('authenticated') === 'true') {
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('appContainer').classList.add('active');
+      init();
+    }
+  </script>
 </body>
 </html>
